@@ -1,6 +1,6 @@
 # Content review — CRRT & PD Dosing (draft)
 
-**App:** CRRT & PD Dosing, v0.1.0-draft
+**App:** CRRT & PD Dosing, v0.1.1-draft
 **Publisher:** Wellness Tech LLC
 **For:** Dr Amar Damodar (Dr D)
 **Status:** `DRAFT=true`. The slim banner reads “Draft – not for clinical use until reviewed by Dr D.” Do not set `DRAFT` to false, or remove the banner, without Dr D’s sign-off in his own words.
@@ -328,6 +328,23 @@ Labeled concentrations follow standard bag labels; ISPD 2021 quotes both 2.5%/2.
 
 ---
 
+
+---
+
+## Prescription output (formatting only)
+
+A prescription-style order sheet was added to both tabs, built from values the app already calculates or that you entered. **No formula math was changed.** Copy produces the same plain text; Print prints only the visible tab’s sheet.
+
+**CRRT sheet.** Weight, modality (CVVH / CVVHD / CVVHDF, with the pre / post / mixed note), target effluent dose in mL/kg/h and mL/h (mL/h is the entered target × weight, a unit conversion only), blood flow, replacement rate and pre/post split, dialysate rate, net UF goal, anticoagulation as entered, filtration fraction with the existing 20% caution / 25% warning flags, and the downtime-adjusted prescribed dose (the app’s existing predilution-corrected, downtime-adjusted delivered estimate). Fluid composition (K / Ca / bicarbonate bath) and monitoring labs are always blank write-in lines — the app has no inputs for them.
+
+**PD sheet.** CAPD: exchanges, fill volume, dwell, dextrose %, icodextrin as selected. APD: instilled total volume, night cycles, fill, dwell, last fill, day dwell (last-fill dwell), night dextrose, last-fill fluid. Plus weekly Kt/V urea and weekly CrCl (Mosteller) when those can already be calculated; otherwise blank.
+
+**Header / footer.** Date (the device’s local calendar date, not stored), blank Patient / MRN lines, blank prescriber signature and date/time, and the footer “Draft – verify before use; clinical judgment required.”
+
+**Anticoagulation control.** The app previously had citrate helpers only, and those helpers already carry starting values (target 3 mmol/L, ACD-A 113 mmol/L). A None / Citrate / Heparin chip was added with **no option pre-selected**, so the sheet does not assume citrate from those helper defaults. If you leave it unselected, the sheet keeps a blank write-in line. Heparin dose and PTT / anti-Xa are write-in only; there is still no heparin calculator.
+
+- [ ] Sign-off: Prescription order-sheet wording and blank write-in lines (no new math)
+
 ## Items not included, on purpose
 
 - No antibiotic or intraperitoneal drug dosing (ISPD peritonitis 2022 tables would need every number transcribed from the guideline table and cited as such).
@@ -363,5 +380,12 @@ Labeled concentrations follow standard bag labels; ISPD 2021 quotes both 2.5%/2.
 10. **Mixed / CVVHDF rate splits** default to 50% and are labelled as starting splits, not guideline targets.
 
 11. **ISPD 2020 page numbers.** We cite *Perit Dial Int.* 2020;**40(3):244-253** and doi:10.1177/0896860819895364 (the practice-recommendations paper). A nearby article in the same issue is 40:323-329.
+
+
+12. **Prescription anticoagulation.** No anticoagulant is pre-selected on the order sheet. Citrate infusion details appear only when you choose Citrate. Helper defaults (3 mmol/L, ACD-A) are not copied onto the sheet unless that choice is made.
+
+13. **“Downtime-adjusted prescribed dose”** on the CRRT sheet is the existing predilution-corrected, downtime-adjusted delivered estimate already shown in the results panel. It is not a new formula.
+
+14. **Target effluent mL/h** on the CRRT sheet is the entered target (mL/kg/h) × weight. Unit conversion only.
 
 Please also confirm you are comfortable with KDIGO / ISPD range labels being shown as interpretive chips (aids, not orders).

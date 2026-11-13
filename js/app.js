@@ -105,6 +105,12 @@
     recalcCrrt();
   });
 
+  let anticoagulation = "";
+  bindChips("c-ac", (btn) => {
+    anticoagulation = btn.dataset.ac || "";
+    recalcCrrt();
+  });
+
   let pdMod = "capd";
   bindChips("p-mod", (btn) => {
     pdMod = btn.dataset.pmod;
@@ -447,6 +453,25 @@
       setText("c-cit-m", "—");
     }
 
+    renderCrrtRx({
+      weightKg: wt,
+      modality,
+      targetMlKgH: target,
+      qbMlMin: qb,
+      qpreMlH: qpre,
+      qpostMlH: qpost,
+      qdMlH: qd,
+      qnetMlH: qnet,
+      anticoagulation,
+      citrateInfusionMlH: anticoagulation === "citrate" ? numFromMetric("c-cit-r") : null,
+      citrateMmolH: anticoagulation === "citrate" ? numFromMetric("c-cit-m") : null,
+      citrateSolution: anticoagulation === "citrate" ? citrateSolutionLabel() : "",
+      citrateTargetMmolPerL: anticoagulation === "citrate" ? num($("c-cit-t")) : null,
+      ffPct: ffPct,
+      ffFlag: ffFlagFromPct(ffPct),
+      downtimeAdjustedMlKgH: delivered,
+    });
+
     updateDock();
   }
 
@@ -713,6 +738,8 @@
     }
     setText("p-glu", vol.dexG ? fmt(vol.dexG, 0) + " g" : "—");
     setText("p-ico-g", vol.icoG ? fmt(vol.icoG, 0) + " g" : "—");
+
+    renderPdRx({ ktv, crcl, vol });
 
     updateDock();
   }
@@ -1010,6 +1037,237 @@
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && sheet.classList.contains("open")) closeSheet();
   });
+
+  /* ── prescription order sheets (formatting only; no new math) ── */
+  const RX = window.CrrtPdPrescription;
+
+  function ffFlagFromPct(ffPct) {
+    if (!F.isNum(ffPct)) return "";
+    const frac = ffPct / 100;
+    if (frac > F.TARGETS.FF_WARN) return "warning";
+    if (frac >= F.TARGETS.FF_CAUTION) return "caution";
+    return "";
+  }
+
+  function citrateSolutionLabel() {
+    if ($("c-acda").classList.contains("is-on")) return "ACD-A 113 mmol/L";
+    if ($("c-tsc").classList.contains("is-on")) return "4% TSC 136 mmol/L";
+    const cs = num($("c-cit-s"));
+    return cs !== null ? fmt(cs, 0) + " mmol/L" : "";
+  }
+
+  function numFromMetric(id) {
+    const t = ($(id) && $(id).textContent) || "";
+    if (!t || t === "—") return null;
+    const m = t.replace(/,/g, "").match(/-?\d+(?:\.\d+)?/);
+    return m ? Number(m[0]) : null;
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function isWriteIn(value) {
+    return !value || /^_+$/.test(value.trim());
+  }
+
+  function rowHtml(line) {
+    const sub = /^\s/.test(line);
+    const trimmed = line.trim();
+    const idx = trimmed.indexOf(":");
+    if (idx < 0) {
+      return trimmed
+        ? '<div class="rx-section">' + esc(trimmed) + "</div>"
+        : "";
+    }
+    const label = trimmed.slice(0, idx);
+    const value = trimmed.slice(idx + 1).trim();
+    let cls = "rx-row" + (sub ? " sub" : "");
+    if (/\bWARNING\b/.test(value)) cls += " flag-warning";
+    else if (/\bCAUTION\b/.test(value)) cls += " flag-caution";
+    const rv = isWriteIn(value) ? '<span class="line"></span>' : esc(value);
+    return (
+      '<div class="' +
+      cls +
+      '"><span class="rk">' +
+      esc(label) +
+      '</span><span class="rv">' +
+      rv +
+      "</span></div>"
+    );
+  }
+
+  function bathLineHtml(kind) {
+    return (
+      '<div class="rx-bath-line"><span class="kind">' +
+      esc(kind) +
+      ':</span>' +
+      '<span class="rx-writein"><span class="lbl">K</span><span class="line"></span></span>' +
+      '<span class="rx-writein"><span class="lbl">Ca</span><span class="line"></span></span>' +
+      '<span class="rx-writein"><span class="lbl">Bicarbonate</span><span class="line"></span></span></div>'
+    );
+  }
+
+  function renderSheet(el, rx) {
+    if (!el || !rx) return;
+    const lines = rx.text.split("\n");
+    const body = [];
+    let phase = "seek";
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (phase === "seek") {
+        if (line.startsWith("Patient:")) phase = "after-patient";
+        continue;
+      }
+      if (phase === "after-patient") {
+        if (line.trim() === "") phase = "body";
+        continue;
+      }
+      if (line.startsWith("Prescriber:") || line === rx.footer) break;
+      body.push(line);
+    }
+
+    const rowBits = [];
+    let bathBits = "";
+    let labsHtml = "";
+    let inBath = false;
+    body.forEach((line) => {
+      if (line === "Fluid composition / bath (write in)") {
+        inBath = true;
+        return;
+      }
+      if (inBath) {
+        if (line.startsWith("Monitoring labs:")) {
+          inBath = false;
+          labsHtml =
+            '<div class="rx-section" style="margin-top:14px">Monitoring labs</div>' +
+            '<div class="rx-writein" style="margin-top:4px"><span class="line"></span></div>';
+          return;
+        }
+        if (/Replacement:/.test(line)) bathBits += bathLineHtml("Replacement");
+        else if (/Dialysate:/.test(line)) bathBits += bathLineHtml("Dialysate");
+        return;
+      }
+      if (line.trim() === "") return;
+      if (line.startsWith("Monitoring labs:")) {
+        labsHtml =
+          '<div class="rx-section" style="margin-top:14px">Monitoring labs</div>' +
+          '<div class="rx-writein" style="margin-top:4px"><span class="line"></span></div>';
+        return;
+      }
+      rowBits.push(rowHtml(line));
+    });
+
+    el.innerHTML =
+      '<div class="rx-head">' +
+      '<div class="rx-kicker">Wellness Tech LLC</div>' +
+      '<div class="rx-title">' +
+      esc(rx.title) +
+      "</div>" +
+      '<div class="rx-date">Date: ' +
+      esc(rx.date) +
+      "</div>" +
+      '<div class="rx-id-line">' +
+      '<div class="rx-writein"><span class="lbl">Patient</span><span class="line"></span></div>' +
+      '<div class="rx-writein"><span class="lbl">MRN</span><span class="line"></span></div>' +
+      "</div></div>" +
+      '<div class="rx-rows">' +
+      rowBits.join("") +
+      "</div>" +
+      (bathBits
+        ? '<div class="rx-section">Fluid composition / bath (write in)</div><div class="rx-bath">' +
+          bathBits +
+          "</div>"
+        : "") +
+      labsHtml +
+      '<div class="rx-sig">' +
+      '<div class="rx-writein"><span class="lbl">Prescriber</span><span class="line"></span></div>' +
+      '<div class="rx-writein"><span class="lbl">Date/time</span><span class="line"></span></div>' +
+      "</div>" +
+      '<p class="rx-footer">' +
+      esc(rx.footer) +
+      "</p>";
+    el.dataset.text = rx.text;
+  }
+
+  function renderCrrtRx(opts) {
+    if (!RX) return;
+    const rx = RX.formatCrrtPrescription(opts);
+    renderSheet($("c-rx-sheet"), rx);
+  }
+
+  function renderPdRx(ctx) {
+    if (!RX) return;
+    const ktv = ctx.ktv;
+    const crcl = ctx.crcl;
+    const opts = { modality: pdMod };
+    if (pdMod === "capd") {
+      opts.exchanges = num($("p-nex"));
+      opts.fillL = num($("p-fill"));
+      opts.dwellH = num($("p-dwell"));
+      opts.dextrosePct = num($("p-dex"));
+      opts.icodextrin = $("p-ico").getAttribute("aria-pressed") === "true";
+    } else {
+      opts.cycles = num($("p-cyc"));
+      opts.nightFillL = num($("p-nfill"));
+      opts.nightDwellH = num($("p-ndwell"));
+      opts.nightDextrosePct = num($("p-ndex"));
+      opts.lastFillL = num($("p-lfill"));
+      opts.dayDwellH = num($("p-ldwell"));
+      opts.icodextrin = $("p-lico").getAttribute("aria-pressed") === "true";
+      const instilled = ctx.vol && F.isNum(ctx.vol.instilled) ? ctx.vol.instilled : null;
+      opts.totalVolumeL = instilled;
+    }
+    if (ktv) opts.weeklyKtv = ktv.weeklyKtvTotal;
+    if (crcl) opts.weeklyCrClMosteller = crcl.totalLWeek173Mosteller;
+    const rx = RX.formatPdPrescription(opts);
+    renderSheet($("p-rx-sheet"), rx);
+  }
+
+  function bindCopyPrint(btnId, sheetId) {
+    const btn = $(btnId);
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      const text = ($(sheetId) && $(sheetId).dataset.text) || "";
+      const finish = (ok) => {
+        if (!ok) return;
+        btn.classList.add("is-copied");
+        btn.textContent = "Copied";
+        setTimeout(() => {
+          btn.classList.remove("is-copied");
+          btn.textContent = "Copy";
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => finish(true)).catch(() => finish(false));
+        return;
+      }
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try {
+        ok = document.execCommand("copy");
+      } catch (e) {
+        ok = false;
+      }
+      document.body.removeChild(ta);
+      finish(ok);
+    });
+  }
+
+  bindCopyPrint("c-rx-copy", "c-rx-sheet");
+  bindCopyPrint("p-rx-copy", "p-rx-sheet");
+  $("c-rx-print").addEventListener("click", () => window.print());
+  $("p-rx-print").addEventListener("click", () => window.print());
 
   /* first paint */
   suggestAndFill(true);

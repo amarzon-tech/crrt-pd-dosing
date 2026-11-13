@@ -795,3 +795,251 @@ html, body { overflow-x: clip; max-width: 100%; }
 @media (min-width: 600px) {
   .segment { max-width: 340px; }
 }
+
+/* ── Prescription order sheet ── */
+.rx-card {
+  background: var(--bg-elevated);
+}
+.rx-card-h {
+  align-items: center;
+}
+.rx-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.rx-btn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--teal);
+  background: var(--teal-soft);
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  min-height: 36px;
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.rx-btn:hover { transform: scale(1.03); }
+.rx-btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.rx-btn.is-copied {
+  color: var(--green-ink);
+  background: var(--green-bg);
+}
+
+.rx-sheet {
+  border: 1px solid var(--hairline-strong);
+  border-radius: 14px;
+  padding: 16px 16px 14px;
+  background: var(--bg-elevated);
+  color: var(--ink);
+}
+.rx-head {
+  border-bottom: 2px solid var(--navy);
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+.rx-kicker {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 2px;
+}
+.rx-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--navy);
+  line-height: 1.15;
+}
+.rx-date {
+  margin-top: 8px;
+  font-size: 13.5px;
+  color: var(--ink-secondary);
+}
+.rx-id-line {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 13.5px;
+}
+.rx-writein {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.rx-writein .lbl {
+  color: var(--ink-secondary);
+  flex-shrink: 0;
+}
+.rx-writein .line {
+  flex: 1;
+  border-bottom: 1px solid var(--ink);
+  min-height: 1.15em;
+  min-width: 48px;
+}
+.rx-rows {
+  display: grid;
+  gap: 5px;
+  font-size: 14px;
+}
+.rx-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: baseline;
+  padding: 3px 0;
+  border-bottom: 1px dotted var(--hairline);
+}
+.rx-row .rk {
+  color: var(--ink-secondary);
+}
+.rx-row .rv {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.rx-row.sub .rk { padding-left: 14px; font-weight: 400; }
+.rx-row.sub .rv { font-weight: 500; }
+.rx-row.flag-caution .rv { color: var(--amber-ink); }
+.rx-row.flag-warning .rv { color: var(--red-ink); }
+.rx-row .rv .line {
+  display: block;
+  border-bottom: 1px solid var(--ink);
+  min-height: 1.15em;
+  width: 100%;
+}
+.rx-section {
+  margin-top: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.rx-bath {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--ink-secondary);
+  display: grid;
+  gap: 6px;
+}
+.rx-bath-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: baseline;
+}
+.rx-bath-line .kind {
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 7.5em;
+}
+.rx-sig {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline-strong);
+  font-size: 13.5px;
+}
+.rx-footer {
+  margin-top: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--draft-ink);
+  text-align: center;
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .rx-id-line,
+  .rx-sig {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .rx-bath-line {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .rx-bath-line .kind { min-width: 0; }
+  .rx-row .rv { overflow-wrap: anywhere; }
+}
+
+/* ── Print: only the visible tab's prescription ── */
+@media print {
+  :root, [data-theme="dark"] {
+    --bg: #fff;
+    --bg-elevated: #fff;
+    --ink: #000;
+    --ink-secondary: #222;
+    --ink-tertiary: #333;
+    --navy: #000;
+    --teal: #000;
+    --amber-ink: #000;
+    --red-ink: #000;
+    --draft-ink: #000;
+    --hairline: #ccc;
+    --hairline-strong: #000;
+    color-scheme: light;
+  }
+  @page { margin: 14mm; }
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .draft-banner,
+  .top,
+  .dock,
+  .foot,
+  .overlay,
+  .sheet,
+  .no-print,
+  .rx-actions,
+  .about-btn,
+  .icon-btn,
+  .segment,
+  .card:not(.rx-card),
+  .sticky-result,
+  .col-main > :not(.rx-card) {
+    display: none !important;
+  }
+  .panel { display: none !important; }
+  .panel.active {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+  .panel.active.wrap,
+  .panel.active .col-main {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+  .rx-card {
+    display: block !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    break-inside: avoid;
+  }
+  .rx-card-h { display: none !important; }
+  .rx-sheet {
+    border: 1px solid #000 !important;
+    border-radius: 0 !important;
+    padding: 16px !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .rx-footer { color: #000 !important; }
+}

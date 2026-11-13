@@ -10,7 +10,7 @@
   const DRAFT = true;
   const DRAFT_BANNER = "Draft – not for clinical use until reviewed by Dr D";
   const APP_NAME = "CRRT & PD Dosing";
-  const APP_VERSION = "0.1.0-draft";
+  const APP_VERSION = "0.1.1-draft";
   const SUPPORT_EMAIL = "amardamodar@gmail.com";
   const PUBLISHER = "Wellness Tech LLC";
 

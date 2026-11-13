@@ -1,11 +1,12 @@
 /* Offline cache for CRRT & PD Dosing. No network after first load. */
-const CACHE = "crrt-pd-dosing-v1";
+const CACHE = "crrt-pd-dosing-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./css/styles.css",
   "./js/config.js",
   "./js/formulas.js",
+  "./js/prescription.js",
   "./js/app.js",
   "./manifest.json",
   "./icons/icon.svg",
