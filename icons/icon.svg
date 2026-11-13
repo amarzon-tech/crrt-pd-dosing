@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="CRRT and PD Dosing">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0C6B6E"/>
+      <stop offset="1" stop-color="#102A3A"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <!-- continuous circuit loop -->
+  <path d="M156 250c0-70 56-120 128-120 52 0 92 24 112 56" fill="none" stroke="#E8F4F3" stroke-width="28" stroke-linecap="round"/>
+  <path d="M356 262c0 70-56 120-128 120-52 0-92-24-112-56" fill="none" stroke="#E8F4F3" stroke-width="28" stroke-linecap="round"/>
+  <!-- drop -->
+  <path d="M256 186c28 42 62 70 62 104a62 62 0 1 1-124 0c0-34 34-62 62-104z" fill="#7EE0D6"/>
+  <circle cx="244" cy="278" r="14" fill="#E8F4F3" opacity="0.55"/>
+</svg>

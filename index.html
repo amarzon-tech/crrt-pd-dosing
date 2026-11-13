@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#102a3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CRRT/PD">
+  <meta name="description" content="Draft clinician tools for CRRT and peritoneal dialysis dosing. Offline, no login, no data collection. Not for clinical use until reviewed by Dr D.">
+  <meta name="robots" content="noindex">
+  <title>CRRT &amp; PD Dosing — Draft</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/png" href="./icons/favicon.png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <div class="draft-banner" id="draft-banner" role="status">Draft – not for clinical use until reviewed by Dr D</div>
+
+  <header class="top">
+    <div class="top-row">
+      <div>
+        <p class="eyebrow">Wellness Tech LLC</p>
+        <h1>CRRT &amp; PD Dosing</h1>
+        <p class="subhead">Prescription planners for continuous and peritoneal dialysis. Offline · no data collected.</p>
+      </div>
+      <button class="icon-btn" id="theme-btn" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M21 14.5A8.5 8.5 0 1 1 9.5 3 7 7 0 0 0 21 14.5z"/>
+        </svg>
+      </button>
+    </div>
+    <div class="segment" id="tab-seg" data-value="crrt" role="tablist" aria-label="Modality">
+      <div class="segment-pill" aria-hidden="true"></div>
+      <button type="button" role="tab" id="tab-crrt" aria-selected="true" aria-controls="panel-crrt">CRRT</button>
+      <button type="button" role="tab" id="tab-pd" aria-selected="false" aria-controls="panel-pd">PD</button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════ CRRT ═══════════════════════════════ -->
+  <section class="wrap panel active" id="panel-crrt" role="tabpanel" aria-labelledby="tab-crrt">
+    <div class="col-main">
+
+      <article class="card" id="crrt-target-card">
+        <div class="card-h">
+          <h2>Patient &amp; target</h2>
+          <button type="button" class="about-btn" data-about="crrt-dose">About</button>
+        </div>
+        <div class="grid-2">
+          <label class="field">
+            <span class="field-label">Weight</span>
+            <div class="field-control">
+              <input id="c-wt" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="80" aria-label="Weight">
+              <span class="unit-pill">kg</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Hematocrit</span>
+            <div class="field-control">
+              <input id="c-hct" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="30" aria-label="Hematocrit">
+              <span class="unit-pill">%</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Target prescribed dose</span>
+            <div class="field-control">
+              <input id="c-target" inputmode="decimal" enterkeyhint="next" autocomplete="off" value="25" aria-label="Target prescribed dose">
+              <span class="unit-pill">mL/kg/h</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Expected downtime</span>
+            <div class="field-control">
+              <input id="c-down" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="10" aria-label="Expected downtime">
+              <span class="unit-pill">%</span>
+            </div>
+          </label>
+        </div>
+        <p class="note">KDIGO 2012 recommends <strong>delivering</strong> 20–25 mL/kg/h. To reach that, “it is generally necessary to prescribe in the range of 25–30 mL/kg/h, and to minimize interruptions.” The default 25 is a starting prescribed dose — the lower end of that usual prescription range — not a delivered-dose target.</p>
+      </article>
+
+      <article class="card">
+        <div class="card-h">
+          <h2>Modality</h2>
+          <button type="button" class="about-btn" data-about="crrt-modality">About</button>
+        </div>
+        <div class="chips" id="c-mod" role="radiogroup" aria-label="CRRT modality">
+          <button type="button" class="chip" role="radio" aria-checked="false" data-mod="cvvh-pre">CVVH pre</button>
+          <button type="button" class="chip is-on" role="radio" aria-checked="true" data-mod="cvvh-post">CVVH post</button>
+          <button type="button" class="chip" role="radio" aria-checked="false" data-mod="cvvh-mixed">CVVH mixed</button>
+          <button type="button" class="chip" role="radio" aria-checked="false" data-mod="cvvhd">CVVHD</button>
+          <button type="button" class="chip" role="radio" aria-checked="false" data-mod="cvvhdf">CVVHDF</button>
+        </div>
+        <div class="slider-row hidden" id="c-pre-wrap">
+          <div class="slider-head"><span>Predilution share of replacement</span><output id="c-pre-out">50%</output></div>
+          <input type="range" id="c-pre-frac" min="0" max="100" value="50" step="5" aria-label="Predilution share of replacement">
+          <p class="note">A starting split for you to adjust — not a guideline target.</p>
+        </div>
+        <div class="slider-row hidden" id="c-d-wrap">
+          <div class="slider-head"><span>Dialysate share of remaining effluent</span><output id="c-d-out">50%</output></div>
+          <input type="range" id="c-d-frac" min="0" max="100" value="50" step="5" aria-label="Dialysate share of remaining effluent">
+          <p class="note">A starting split for you to adjust — not a guideline target.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-h">
+          <h2>Fluid-balance planner</h2>
+          <button type="button" class="about-btn" data-about="crrt-uf">About</button>
+        </div>
+        <div class="grid-3">
+          <label class="field">
+            <span class="field-label">24-h intake</span>
+            <div class="field-control">
+              <input id="c-intake" inputmode="decimal" autocomplete="off" placeholder="2500" aria-label="24-hour intake">
+              <span class="unit-pill">mL</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Other losses</span>
+            <div class="field-control">
+              <input id="c-other" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Other losses">
+              <span class="unit-pill">mL</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Desired 24-h balance</span>
+            <div class="field-control">
+              <input id="c-bal" inputmode="decimal" autocomplete="off" placeholder="−1000" aria-label="Desired 24-hour fluid balance">
+              <span class="unit-pill">mL</span>
+            </div>
+          </label>
+        </div>
+        <p class="note">Negative desired balance means net fluid removal. Other losses are drains, stool, or anything you want counted (no assumed insensible loss is added). Hourly net UF is applied to the prescription below; you can override it.</p>
+        <div class="metric-grid" style="margin-top:12px">
+          <div class="metric" id="c-uf-day-m"><div class="mv" id="c-uf-day">—</div><div class="ml">Required 24-h net UF</div></div>
+          <div class="metric" id="c-uf-h-m"><div class="mv" id="c-uf-h">—</div><div class="ml">Hourly net UF (running)</div></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-h">
+          <h2>Prescription rates</h2>
+          <button type="button" class="about-btn" data-about="crrt-rates">About</button>
+        </div>
+        <p class="note" style="margin-top:0;margin-bottom:12px">Suggested from the target dose and net UF. Edit any rate to check an existing prescription — results update as you type.</p>
+        <div class="grid-2">
+          <label class="field">
+            <span class="field-label">Replacement, pre-filter</span>
+            <div class="field-control">
+              <input id="c-qpre" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Pre-filter replacement">
+              <span class="unit-pill">mL/h</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Replacement, post-filter</span>
+            <div class="field-control">
+              <input id="c-qpost" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Post-filter replacement">
+              <span class="unit-pill">mL/h</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Dialysate</span>
+            <div class="field-control">
+              <input id="c-qd" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Dialysate rate">
+              <span class="unit-pill">mL/h</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Net ultrafiltration</span>
+            <div class="field-control">
+              <input id="c-qnet" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Net ultrafiltration">
+              <span class="unit-pill">mL/h</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Blood flow (Qb)</span>
+            <div class="field-control">
+              <input id="c-qb" inputmode="decimal" autocomplete="off" placeholder="150" aria-label="Blood flow">
+              <span class="unit-pill">mL/min</span>
+            </div>
+          </label>
+        </div>
+        <p class="note" id="c-qb-hint"></p>
+        <div class="metric-grid" style="margin-top:12px">
+          <div class="metric" id="c-ff-m"><div class="mv" id="c-ff">—</div><div class="ml">Filtration fraction</div></div>
+          <div class="metric"><div class="mv" id="c-df">—</div><div class="ml">Predilution factor</div></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-h">
+          <h2>Citrate anticoagulation</h2>
+          <button type="button" class="about-btn" data-about="citrate">About</button>
+        </div>
+        <p class="note" style="margin-top:0;margin-bottom:12px">Total-to-ionized calcium ratio for accumulation (Meier-Kriesche 2001). The infusion helper is a starting citrate-to-blood ratio only — protocols titrate to post-filter ionized calcium.</p>
+        <div class="grid-2">
+          <label class="field">
+            <span class="field-label">Total calcium</span>
+            <div class="field-control">
+              <input id="c-tca" inputmode="decimal" autocomplete="off" placeholder="9.0" aria-label="Total calcium">
+              <button type="button" class="unit-pill btn" id="c-tca-u" data-unit="mg/dL" aria-label="Total calcium unit">mg/dL</button>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Ionized calcium</span>
+            <div class="field-control">
+              <input id="c-ica" inputmode="decimal" autocomplete="off" placeholder="1.10" aria-label="Ionized calcium">
+              <button type="button" class="unit-pill btn" id="c-ica-u" data-unit="mmol/L" aria-label="Ionized calcium unit">mmol/L</button>
+            </div>
+          </label>
+        </div>
+        <div class="metric-grid" style="margin-top:12px">
+          <div class="metric" id="c-ratio-m"><div class="mv" id="c-ratio">—</div><div class="ml">Total / ionized Ca ratio</div></div>
+          <div class="metric"><div class="mv" id="c-ratio-st" style="font-size:16px">—</div><div class="ml">Interpretation</div></div>
+        </div>
+        <hr class="sep">
+        <div class="grid-3">
+          <label class="field">
+            <span class="field-label">Citrate target</span>
+            <div class="field-control">
+              <input id="c-cit-t" inputmode="decimal" autocomplete="off" value="3" aria-label="Citrate target in blood">
+              <span class="unit-pill">mmol/L</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Solution conc.</span>
+            <div class="field-control">
+              <input id="c-cit-s" inputmode="decimal" autocomplete="off" value="113" aria-label="Citrate solution concentration">
+              <span class="unit-pill">mmol/L</span>
+            </div>
+          </label>
+          <div class="field" style="justify-content:flex-end">
+            <span class="field-label">Common solutions</span>
+            <div class="chips" style="margin-top:2px">
+              <button type="button" class="chip is-on" id="c-acda" data-sol="113">ACD-A</button>
+              <button type="button" class="chip" id="c-tsc" data-sol="136">4% TSC</button>
+            </div>
+          </div>
+        </div>
+        <div class="metric-grid" style="margin-top:12px">
+          <div class="metric"><div class="mv" id="c-cit-r">—</div><div class="ml">Infusion rate</div></div>
+          <div class="metric"><div class="mv" id="c-cit-m">—</div><div class="ml">Citrate dose</div></div>
+        </div>
+        <p class="note">Default target 3 mmol per litre of blood (about 3–4 in published examples). ACD-A is 113 mmol/L and 4% trisodium citrate is 136 mmol/L, from Oudemans-van Straaten &amp; Ostermann, <em>Crit Care</em> 2012, Table 1. This is not a complete RCA protocol — calcium replacement is not calculated here.</p>
+      </article>
+    </div>
+
+    <aside class="sticky-result" id="c-sticky" aria-live="polite">
+      <div class="kicker">CRRT dose</div>
+      <div class="result-hero">
+        <div><span class="value" id="c-hero">—</span><span class="unit" id="c-hero-u"></span></div>
+        <span class="status-chip info" id="c-hero-chip">Enter weight</span>
+      </div>
+      <p class="result-label" id="c-hero-lbl">Delivered effluent dose</p>
+      <div class="result-rows">
+        <div class="result-row"><span class="rk">Prescribed</span><span class="rv" id="c-r-pres">—</span></div>
+        <div class="result-row"><span class="rk">Corrected</span><span class="rv" id="c-r-corr">—</span></div>
+        <div class="result-row"><span class="rk">Delivered</span><span class="rv" id="c-r-del">—</span></div>
+        <div class="result-row"><span class="rk">Total effluent</span><span class="rv" id="c-r-qeff">—</span></div>
+        <div class="result-row"><span class="rk">Filtration fraction</span><span class="rv" id="c-r-ff">—</span></div>
+        <div class="result-row"><span class="rk">Min Qb (FF 25%)</span><span class="rv" id="c-r-qbmin">—</span></div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ═══════════════════════════════ PD ═══════════════════════════════ -->
+  <section class="wrap panel" id="panel-pd" role="tabpanel" aria-labelledby="tab-pd" hidden>
+    <div class="col-main">
+
+      <article class="card">
+        <div class="card-h">
+          <h2>Patient</h2>
+          <button type="button" class="about-btn" data-about="pd-anthro">About</button>
+        </div>
+        <div class="grid-2">
+          <label class="field">
+            <span class="field-label">Age</span>
+            <div class="field-control">
+              <input id="p-age" inputmode="decimal" autocomplete="off" placeholder="60" aria-label="Age">
+              <span class="unit-pill">years</span>
+            </div>
+          </label>
+          <div class="field">
+            <span class="field-label">Sex</span>
+            <div class="chips" id="p-sex" role="radiogroup" aria-label="Sex" style="margin-top:4px">
+              <button type="button" class="chip is-on" role="radio" aria-checked="true" data-sex="m">Male</button>
+              <button type="button" class="chip" role="radio" aria-checked="false" data-sex="f">Female</button>
+            </div>
+          </div>
+          <label class="field">
+            <span class="field-label">Height</span>
+            <div class="field-control">
+              <input id="p-ht" inputmode="decimal" autocomplete="off" placeholder="170" aria-label="Height">
+              <span class="unit-pill">cm</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Weight</span>
+            <div class="field-control">
+              <input id="p-wt" inputmode="decimal" autocomplete="off" placeholder="70" aria-label="Weight">
+              <span class="unit-pill">kg</span>
+            </div>
+          </label>
+        </div>
+        <div class="metric-grid" style="margin-top:12px">
+          <div class="metric"><div class="mv" id="p-v">—</div><div class="ml">Watson V (urea volume)</div></div>
+          <div class="metric"><div class="mv" id="p-bsa">—</div><div class="ml">BSA Mosteller (DuBois shown)</div></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-h">
+          <h2>Prescription planner</h2>
+          <button type="button" class="about-btn" data-about="pd-rx">About</button>
+        </div>
+        <div class="chips" id="p-mod" role="radiogroup" aria-label="PD modality">
+          <button type="button" class="chip is-on" role="radio" aria-checked="true" data-pmod="capd">CAPD</button>
+          <button type="button" class="chip" role="radio" aria-checked="false" data-pmod="apd">APD</button>
+        </div>
+
+        <div id="p-capd" style="margin-top:14px">
+          <div class="grid-3">
+            <label class="field">
+              <span class="field-label">Exchanges</span>
+              <div class="field-control">
+                <input id="p-nex" inputmode="decimal" autocomplete="off" value="4" aria-label="Number of CAPD exchanges">
+                <span class="unit-pill">/day</span>
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Fill volume</span>
+              <div class="field-control">
+                <input id="p-fill" inputmode="decimal" autocomplete="off" value="2" aria-label="CAPD fill volume">
+                <span class="unit-pill">L</span>
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Dwell</span>
+              <div class="field-control">
+                <input id="p-dwell" inputmode="decimal" autocomplete="off" value="6" aria-label="CAPD dwell">
+                <span class="unit-pill">h</span>
+              </div>
+            </label>
+          </div>
+          <div class="grid-2" style="margin-top:12px">
+            <label class="field">
+              <span class="field-label">Dextrose (day bags)</span>
+              <div class="field-control">
+                <input id="p-dex" inputmode="decimal" autocomplete="off" value="2.5" aria-label="Day-bag dextrose percent">
+                <span class="unit-pill">%</span>
+              </div>
+            </label>
+            <div class="field">
+              <span class="field-label">Long-dwell icodextrin</span>
+              <div class="chips" style="margin-top:4px">
+                <button type="button" class="chip" id="p-ico" aria-pressed="false">Icodextrin 7.5%, 1 bag</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="p-apd" class="hidden" style="margin-top:14px">
+          <div class="grid-3">
+            <label class="field">
+              <span class="field-label">Night cycles</span>
+              <div class="field-control">
+                <input id="p-cyc" inputmode="decimal" autocomplete="off" value="5" aria-label="Night cycles">
+                <span class="unit-pill"></span>
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Night fill</span>
+              <div class="field-control">
+                <input id="p-nfill" inputmode="decimal" autocomplete="off" value="2" aria-label="Night fill volume">
+                <span class="unit-pill">L</span>
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Night dwell</span>
+              <div class="field-control">
+                <input id="p-ndwell" inputmode="decimal" autocomplete="off" value="1.5" aria-label="Night dwell">
+                <span class="unit-pill">h</span>
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Night dextrose</span>
+              <div class="field-control">
+                <input id="p-ndex" inputmode="decimal" autocomplete="off" value="1.5" aria-label="Night dextrose percent">
+                <span class="unit-pill">%</span>
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Last fill (day)</span>
+              <div class="field-control">
+                <input id="p-lfill" inputmode="decimal" autocomplete="off" value="2" aria-label="Last fill volume">
+                <span class="unit-pill">L</span>
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Last-fill dwell</span>
+              <div class="field-control">
+                <input id="p-ldwell" inputmode="decimal" autocomplete="off" value="14" aria-label="Last fill dwell">
+                <span class="unit-pill">h</span>
+              </div>
+            </label>
+          </div>
+          <div class="chips" style="margin-top:12px">
+            <button type="button" class="chip is-on" id="p-lico" aria-pressed="true">Last fill: icodextrin 7.5%</button>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:12px">
+          <label class="field">
+            <span class="field-label">24-h net ultrafiltration</span>
+            <div class="field-control">
+              <input id="p-uf" inputmode="decimal" autocomplete="off" placeholder="1.0" aria-label="24-hour net ultrafiltration">
+              <span class="unit-pill">L</span>
+            </div>
+          </label>
+          <div class="metric" style="align-self:end">
+            <div class="mv" id="p-vol">—</div>
+            <div class="ml">Instilled / estimated drain</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-h">
+          <h2>Clearances</h2>
+          <button type="button" class="about-btn" data-about="pd-ktv">About</button>
+        </div>
+        <p class="note" style="margin-top:0;margin-bottom:12px">Enter D/P urea from a <strong>24-hour collection on this prescription</strong>. A 4-hour PET D/P will overestimate clearance on short APD cycles — this planner does not apply an uncited dwell-time adjustment.</p>
+        <div class="grid-2">
+          <label class="field">
+            <span class="field-label">D/P urea (24-h)</span>
+            <div class="field-control">
+              <input id="p-dpur" inputmode="decimal" autocomplete="off" placeholder="0.90" aria-label="D over P urea">
+              <span class="unit-pill">ratio</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">D/P creatinine (24-h)</span>
+            <div class="field-control">
+              <input id="p-dpcr" inputmode="decimal" autocomplete="off" placeholder="0.70" aria-label="D over P creatinine">
+              <span class="unit-pill">ratio</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">24-h urine volume</span>
+            <div class="field-control">
+              <input id="p-uvol" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="24-hour urine volume">
+              <span class="unit-pill">L</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">U/P urea</span>
+            <div class="field-control">
+              <input id="p-upur" inputmode="decimal" autocomplete="off" placeholder="" aria-label="U over P urea">
+              <span class="unit-pill">ratio</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">U/P creatinine</span>
+            <div class="field-control">
+              <input id="p-upcr" inputmode="decimal" autocomplete="off" placeholder="" aria-label="U over P creatinine">
+              <span class="unit-pill">ratio</span>
+            </div>
+          </label>
+        </div>
+        <div class="metric-grid" style="margin-top:12px">
+          <div class="metric" id="p-ktv-m"><div class="mv" id="p-ktv">—</div><div class="ml">Weekly Kt/V urea (total)</div></div>
+          <div class="metric"><div class="mv" id="p-crcl">—</div><div class="ml">Weekly CrCl (L/wk/1.73 m²)</div></div>
+        </div>
+        <div class="callout" id="p-ispd" hidden></div>
+        <p class="note" id="p-ktv-detail"></p>
+      </article>
+
+      <article class="card">
+        <div class="card-h">
+          <h2>PET interpretation</h2>
+          <button type="button" class="about-btn" data-about="pet">About</button>
+        </div>
+        <div class="grid-2">
+          <label class="field">
+            <span class="field-label">4-h D/P creatinine</span>
+            <div class="field-control">
+              <input id="p-pet-dp" inputmode="decimal" autocomplete="off" placeholder="0.65" aria-label="Four-hour D over P creatinine">
+              <span class="unit-pill">ratio</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">4-h D/D₀ glucose</span>
+            <div class="field-control">
+              <input id="p-pet-dd" inputmode="decimal" autocomplete="off" placeholder="0.38" aria-label="Four-hour D over D0 glucose">
+              <span class="unit-pill">ratio</span>
+            </div>
+          </label>
+        </div>
+        <p class="note">Or enter concentrations and we will compute the ratios.</p>
+        <div class="grid-2">
+          <label class="field">
+            <span class="field-label">Dialysate Cr (4 h)</span>
+            <div class="field-control">
+              <input id="p-pet-dcr" inputmode="decimal" autocomplete="off" aria-label="Dialysate creatinine at 4 hours">
+              <span class="unit-pill">same unit</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Plasma Cr</span>
+            <div class="field-control">
+              <input id="p-pet-pcr" inputmode="decimal" autocomplete="off" aria-label="Plasma creatinine">
+              <span class="unit-pill">same unit</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Dialysate glucose (4 h)</span>
+            <div class="field-control">
+              <input id="p-pet-g4" inputmode="decimal" autocomplete="off" aria-label="Dialysate glucose at 4 hours">
+              <span class="unit-pill">same unit</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Dialysate glucose (0 h)</span>
+            <div class="field-control">
+              <input id="p-pet-g0" inputmode="decimal" autocomplete="off" aria-label="Dialysate glucose at 0 hours">
+              <span class="unit-pill">same unit</span>
+            </div>
+          </label>
+        </div>
+        <div class="grid-2" style="margin-top:12px">
+          <label class="field">
+            <span class="field-label">4-h PET net UF</span>
+            <div class="field-control">
+              <input id="p-pet-uf" inputmode="decimal" autocomplete="off" placeholder="" aria-label="PET net ultrafiltration">
+              <span class="unit-pill">mL</span>
+            </div>
+          </label>
+          <div class="field">
+            <span class="field-label">PET glucose / dextrose</span>
+            <div class="chips" id="p-pet-dex" role="radiogroup" aria-label="PET dextrose" style="margin-top:4px">
+              <button type="button" class="chip is-on" role="radio" aria-checked="true" data-petdex="2.5">2.5% / 2.27%</button>
+              <button type="button" class="chip" role="radio" aria-checked="false" data-petdex="4.25">4.25% / 3.86%</button>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <span class="badge" id="p-pet-badge">—</span>
+          <span class="badge" id="p-pet-glu" style="margin-left:6px" hidden></span>
+        </div>
+        <div class="callout" id="p-pet-imp" hidden></div>
+        <p class="note" id="p-pet-notes"></p>
+      </article>
+
+      <article class="card">
+        <div class="card-h">
+          <h2>Fluid balance &amp; exposure</h2>
+          <button type="button" class="about-btn" data-about="pd-fluid">About</button>
+        </div>
+        <div class="grid-2">
+          <label class="field">
+            <span class="field-label">24-h intake</span>
+            <div class="field-control">
+              <input id="p-intake" inputmode="decimal" autocomplete="off" placeholder="2000" aria-label="PD 24-hour intake">
+              <span class="unit-pill">mL</span>
+            </div>
+          </label>
+          <label class="field">
+            <span class="field-label">Other losses</span>
+            <div class="field-control">
+              <input id="p-other" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="PD other losses">
+              <span class="unit-pill">mL</span>
+            </div>
+          </label>
+        </div>
+        <div class="metric-grid" style="margin-top:12px">
+          <div class="metric" id="p-bal-m"><div class="mv" id="p-bal">—</div><div class="ml">Estimated 24-h fluid balance</div></div>
+          <div class="metric"><div class="mv" id="p-glu">—</div><div class="ml">Dextrose instilled (not absorbed)</div></div>
+          <div class="metric"><div class="mv" id="p-ico-g">—</div><div class="ml">Icodextrin instilled</div></div>
+        </div>
+        <p class="note">Grams are labeled instilled exposure, not absorption. Absorbed glucose is omitted because a cited method for a mixed daily prescription would need measured drain glucose.</p>
+      </article>
+    </div>
+
+    <aside class="sticky-result" id="p-sticky" aria-live="polite">
+      <div class="kicker">PD weekly Kt/V urea</div>
+      <div class="result-hero">
+        <div><span class="value" id="p-hero">—</span><span class="unit" id="p-hero-u"></span></div>
+        <span class="status-chip info" id="p-hero-chip">Enter V and D/P</span>
+      </div>
+      <p class="result-label">Person-centred (ISPD 2020), not a single cutoff</p>
+      <div class="result-rows">
+        <div class="result-row"><span class="rk">Peritoneal Kt/V</span><span class="rv" id="p-r-p">—</span></div>
+        <div class="result-row"><span class="rk">Residual Kt/V</span><span class="rv" id="p-r-r">—</span></div>
+        <div class="result-row"><span class="rk">Historical 1.7 figure</span><span class="rv" id="p-r-17">—</span></div>
+        <div class="result-row"><span class="rk">CrCl (Mosteller)</span><span class="rv" id="p-r-cr">—</span></div>
+        <div class="result-row"><span class="rk">CrCl (DuBois)</span><span class="rv" id="p-r-crd">—</span></div>
+        <div class="result-row"><span class="rk">Drain for historical 1.7</span><span class="rv" id="p-r-dr">—</span></div>
+      </div>
+    </aside>
+  </section>
+
+  <div class="dock" id="dock" aria-hidden="false">
+    <div>
+      <div class="dl" id="dock-l">Delivered CRRT dose</div>
+      <div><span class="dv" id="dock-v">—</span><span class="du" id="dock-u"></span></div>
+    </div>
+    <span class="status-chip info" id="dock-chip">Enter weight</span>
+  </div>
+
+  <footer class="foot">
+    <p>Draft · Wellness Tech LLC · Support:
+      <a href="mailto:amardamodar@gmail.com">amardamodar@gmail.com</a>.
+      This app works offline, has no login or ads, and never stores or transmits your inputs.
+      Every formula is cited in the About sheet and in
+      <a href="./CONTENT_REVIEW.md">CONTENT_REVIEW.md</a>.
+      Not for clinical use until reviewed by Dr D.
+    </p>
+  </footer>
+
+  <div class="overlay" id="overlay" hidden></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <button type="button" class="sheet-close" id="sheet-close" aria-label="Close">×</button>
+    <h3 id="sheet-title"></h3>
+    <div id="sheet-body"></div>
+  </div>
+
+  <script src="./js/config.js"></script>
+  <script src="./js/formulas.js"></script>
+  <script src="./js/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("./sw.js");
+      });
+    }
+  </script>
+</body>
+</html>

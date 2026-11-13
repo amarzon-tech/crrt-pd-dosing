@@ -1,0 +1,15 @@
+{
+  "name": "CRRT & PD Dosing",
+  "short_name": "CRRT/PD",
+  "description": "Draft clinician dosing tools for CRRT and peritoneal dialysis. Not for clinical use until reviewed by Dr D. Offline, no login, no data collection.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#071016",
+  "theme_color": "#102a3a",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
