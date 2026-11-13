@@ -106,8 +106,40 @@
   });
 
   let anticoagulation = "";
+  let heparinGiveBolus = true;
+  function syncAcBlocks() {
+    const hep = anticoagulation === "heparin";
+    const cit = anticoagulation === "citrate";
+    $("c-heparin-block").classList.toggle("hidden", !hep);
+    $("c-citrate-block").classList.toggle("hidden", !cit);
+  }
   bindChips("c-ac", (btn) => {
     anticoagulation = btn.dataset.ac || "";
+    syncAcBlocks();
+    recalcCrrt();
+  });
+  bindChips("c-hep-bolus-on", (btn) => {
+    heparinGiveBolus = btn.dataset.bolus !== "no";
+    $("c-hep-bolus-wrap").classList.toggle("hidden", !heparinGiveBolus);
+    recalcCrrt();
+  });
+  $("c-hep-rate-u").addEventListener("click", () => {
+    const el = $("c-hep-rate-u");
+    const cur = el.dataset.unit;
+    const rate = num($("c-hep-rate"));
+    const wt = num($("c-wt"));
+    if (cur === "IU/kg/h") {
+      el.dataset.unit = "units/h";
+      el.textContent = "units/h";
+      if (rate !== null && wt && wt > 0) $("c-hep-rate").value = String(Math.round(rate * wt));
+    } else {
+      el.dataset.unit = "IU/kg/h";
+      el.textContent = "IU/kg/h";
+      if (rate !== null && wt && wt > 0) {
+        const kgh = rate / wt;
+        $("c-hep-rate").value = String(Math.round(kgh * 10) / 10);
+      }
+    }
     recalcCrrt();
   });
 
@@ -453,6 +485,56 @@
       setText("c-cit-m", "—");
     }
 
+    let hepBolusUnits = null;
+    let hepBolusIuKg = null;
+    let hepBolusGiven = null;
+    let hepRateUnitsH = null;
+    let hepRateIuKgH = null;
+    let hepRateMlH = null;
+    if (anticoagulation === "heparin") {
+      try {
+        const b = F.heparinBolus({
+          weightKg: wt,
+          bolusIuPerKg: num($("c-hep-bolus")),
+          giveBolus: heparinGiveBolus,
+        });
+        hepBolusGiven = b.given;
+        hepBolusUnits = b.given ? b.bolusUnits : 0;
+        hepBolusIuKg = b.given ? b.bolusIuPerKg : 0;
+        setText(
+          "c-hep-bolus-u",
+          b.given ? (F.isNum(b.bolusUnits) ? fmt(b.bolusUnits, 0) + " units" : "—") : "No bolus"
+        );
+      } catch (e) {
+        hepBolusGiven = heparinGiveBolus ? null : false;
+        setText("c-hep-bolus-u", heparinGiveBolus ? "—" : "No bolus");
+      }
+      try {
+        const unit = $("c-hep-rate-u").dataset.unit;
+        const rate = num($("c-hep-rate"));
+        const conc = num($("c-hep-conc"));
+        const opts = { weightKg: wt, concentrationUnitsPerMl: conc };
+        if (unit === "units/h") opts.rateUnitsH = rate;
+        else opts.rateIuPerKgH = rate;
+        const inf = F.heparinInfusion(opts);
+        hepRateUnitsH = inf.rateUnitsH;
+        hepRateIuKgH = inf.rateIuPerKgH;
+        hepRateMlH = inf.rateMlH;
+        setText("c-hep-rate-u-out", F.isNum(inf.rateUnitsH) ? fmt(inf.rateUnitsH, 0) + " units/h" : "—");
+        setText("c-hep-ml", F.isNum(inf.rateMlH) ? fmt(inf.rateMlH, 1) + " mL/h" : "—");
+        $("c-hep-ml-m").hidden = !F.isNum(inf.rateMlH);
+      } catch (e) {
+        setText("c-hep-rate-u-out", "—");
+        setText("c-hep-ml", "—");
+        $("c-hep-ml-m").hidden = true;
+      }
+    } else {
+      setText("c-hep-bolus-u", "—");
+      setText("c-hep-rate-u-out", "—");
+      setText("c-hep-ml", "—");
+      $("c-hep-ml-m").hidden = true;
+    }
+
     renderCrrtRx({
       weightKg: wt,
       modality,
@@ -467,6 +549,15 @@
       citrateMmolH: anticoagulation === "citrate" ? numFromMetric("c-cit-m") : null,
       citrateSolution: anticoagulation === "citrate" ? citrateSolutionLabel() : "",
       citrateTargetMmolPerL: anticoagulation === "citrate" ? num($("c-cit-t")) : null,
+      heparinBolusGiven: anticoagulation === "heparin" ? hepBolusGiven : null,
+      heparinBolusUnits: anticoagulation === "heparin" ? hepBolusUnits : null,
+      heparinBolusIuPerKg: anticoagulation === "heparin" ? hepBolusIuKg : null,
+      heparinInfusionUnitsH: anticoagulation === "heparin" ? hepRateUnitsH : null,
+      heparinInfusionIuPerKgH: anticoagulation === "heparin" ? hepRateIuKgH : null,
+      heparinInfusionMlH: anticoagulation === "heparin" ? hepRateMlH : null,
+      heparinApttTarget: anticoagulation === "heparin" ? ($("c-hep-aptt").value || "").trim() : "",
+      heparinAntiXa: anticoagulation === "heparin" ? ($("c-hep-antixa").value || "").trim() : "",
+      heparinMonitoring: anticoagulation === "heparin" ? ($("c-hep-mon").value || "").trim() : "",
       ffPct: ffPct,
       ffFlag: ffFlagFromPct(ffPct),
       downtimeAdjustedMlKgH: delivered,
@@ -889,6 +980,37 @@
           <li>Neri distinguishes filtration fraction (ideally below 30%) from concentration ratio (keep below 20–25%). We warn at 20% (caution) and 25% (warning) and flag this for review.</li>
           <li>Minimum Qb is derived from the FF equation, not a recommended blood-flow from a guideline.</li>
         </ul>`,
+    },
+    anticoag: {
+      title: "Anticoagulation for CRRT",
+      html: `
+        <h4>KDIGO AKI 2012, section 5.3 (choice of anticoagulant)</h4>
+        <p>KDIGO Clinical Practice Guideline for Acute Kidney Injury. <em>Kidney Int Suppl.</em> 2012;2:1-138, chapter 5.3.</p>
+        <ul>
+          <li><strong>5.3.2.2 (2B):</strong> For anticoagulation in CRRT, “we suggest using regional citrate anticoagulation rather than heparin in patients who do not have contraindications for citrate.”</li>
+          <li><strong>5.3.2.3 (2C):</strong> If citrate is contraindicated, “we suggest using either unfractionated or low-molecular-weight heparin, rather than other anticoagulants.”</li>
+          <li><strong>5.3.3.1 (2C):</strong> If bleeding risk is increased and citrate is not contraindicated, suggest regional citrate rather than no anticoagulation.</li>
+          <li><strong>5.3.3.2 (2C):</strong> “We suggest avoiding regional heparinization during CRRT in a patient with increased risk of bleeding.”</li>
+          <li><strong>5.3.4 (1A):</strong> In heparin-induced thrombocytopenia, “all heparin must be stopped” (the rationale includes heparin locks) and “we recommend using direct thrombin inhibitors (such as argatroban) or Factor Xa inhibitors (such as danaparoid or fondaparinux) rather than other or no anticoagulation during RRT.”</li>
+          <li><strong>5.3.4.1 (2C):</strong> In HIT without severe liver failure, “we suggest using argatroban rather than other thrombin or Factor Xa inhibitors during RRT.”</li>
+        </ul>
+        <p>KDIGO does <strong>not</strong> recommend a single numeric unfractionated-heparin dose. The rationale states that UFH is “mostly administered as a prefilter infusion, with large variability in the administered doses,” that the relationship among dose, aPTT, filter survival, and bleeding “is not straightforward,” and that “it is common practice to measure aPTT for safety reasons and to adapt the target to the bleeding risk of the patient.” After summarizing two small UFH-vs-LMWH RCTs, KDIGO concludes “no firm recommendations can be made.” Monitoring “should also include platelet count, allowing timely detection of HIT.”</p>
+        <h4>Starting unfractionated-heparin values used in this app</h4>
+        <p>The editable starting values are the UFH arm of the second trial KDIGO describes:</p>
+        <p class="eq">Bolus 30 IU/kg, then 7 IU/kg/h pre-filter, titrated to aPTT 40–45 seconds.</p>
+        <p>Joannidis M, Kountchev J, Rauchenzauner M, et al. Enoxaparin vs. unfractionated heparin for anticoagulation during continuous veno-venous hemofiltration: a randomized controlled crossover study. <em>Intensive Care Med.</em> 2007;33:1571-1579. <a href="https://pubmed.ncbi.nlm.nih.gov/17563874/" target="_blank" rel="noopener">PMID 17563874</a>. KDIGO reference 616.</p>
+        <p>Joannidis M, Oudemans-van Straaten HM. Clinical review: Patency of the circuit in continuous renal replacement therapy. <em>Crit Care.</em> 2007;11:218. <a href="https://doi.org/10.1186/cc5937" target="_blank" rel="noopener">doi:10.1186/cc5937</a> describes “a possible scheme for UFH” of “a bolus of 30 IU/kg followed by an initial rate of 5 to 10 IU/kg per hour in patients with normal coagulation. However, the level of anticoagulation should be individualized.” That review also notes: “Retrospective analyses indicate increased bleeding if systemic aPTT is longer than 45 seconds.”</p>
+        <p>The source of that bleeding observation is van de Wetering J, Westendorp RG, van der Hoeven JG, et al. Heparin use in continuous renal replacement procedures: the struggle between filter coagulation and patient hemorrhage. <em>J Am Soc Nephrol.</em> 1996;7:145-150. <a href="https://pubmed.ncbi.nlm.nih.gov/8808122/" target="_blank" rel="noopener">PMID 8808122</a> (KDIGO reference 618).</p>
+        <h4>The other KDIGO-cited RCT (not the starting default)</h4>
+        <p>Reeves JH, Cumming AR, Gallagher L, et al. A controlled trial of low-molecular-weight heparin (dalteparin) versus unfractionated heparin as anticoagulant during continuous venovenous hemodialysis with filtration. <em>Crit Care Med.</em> 1999;27:2224-2228 (KDIGO reference 620). UFH arm: bolus 2000–5000 U, then 10 U/kg/h, titrated to an aPTT of 70–80 seconds (mean aPTT 79 seconds). This is shown as a published alternative, not as the app’s starting value, because it conflicts with the 40–45 second target and with the bleeding observation at aPTT &gt; 45 seconds.</p>
+        <h4>What the calculator does</h4>
+        <p class="eq">Bolus (units) = bolus (IU/kg) × weight (kg)<br>
+        Infusion (units/h) = rate (IU/kg/h) × weight (kg)<br>
+        If a bag concentration (units/mL) is entered: mL/h = (units/h) ÷ (units/mL)</p>
+        <p>These are unit conversions only. A no-bolus option is provided so you can match a unit protocol; it is not a cited “preferred” regimen. Bag concentration and monitoring interval have <strong>no cited default</strong> and are left blank for you to fill. We do not pre-fill an anti-Xa range for UFH; the anti-Xa figures in the KDIGO-cited trials were for LMWH (enoxaparin 0.25–0.30 U/ml in Joannidis 2007; a mean of 0.49 U/ml in a subset of the Reeves dalteparin arm).</p>
+        <h4>Citrate helpers</h4>
+        <p>Citrate starting-ratio helpers (total/ionized calcium ratio; citrate-in-blood infusion rate) appear when Citrate is selected. Their equations and citations are in the Citrate about sheet.</p>
+      `,
     },
     citrate: {
       title: "Citrate anticoagulation helpers",

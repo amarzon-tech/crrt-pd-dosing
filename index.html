@@ -190,10 +190,10 @@
         </div>
       </article>
 
-      <article class="card">
+      <article class="card" id="c-ac-card">
         <div class="card-h">
           <h2>Anticoagulation</h2>
-          <button type="button" class="about-btn" data-about="citrate">About</button>
+          <button type="button" class="about-btn" data-about="anticoag">About</button>
         </div>
         <div class="chips" id="c-ac" role="radiogroup" aria-label="Anticoagulation">
           <button type="button" class="chip" role="radio" aria-checked="false" data-ac="none">None</button>
@@ -201,7 +201,66 @@
           <button type="button" class="chip" role="radio" aria-checked="false" data-ac="heparin">Heparin</button>
         </div>
         <p class="note">Leave unselected if you have not chosen an anticoagulant. The prescription keeps a blank write-in line; no default is assumed.</p>
-        <p class="note" style="margin-bottom:12px">Citrate helpers below: total-to-ionized calcium ratio for accumulation (Meier-Kriesche 2001). The infusion helper is a starting citrate-to-blood ratio only — protocols titrate to post-filter ionized calcium. Heparin dose is not calculated here.</p>
+
+        <div id="c-heparin-block" class="hidden" style="margin-top:14px">
+          <div class="callout warn" id="c-hep-caution">
+            <strong>Bleeding and HIT.</strong> Avoid heparin if heparin-induced thrombocytopenia is suspected or confirmed: KDIGO 5.3.4 (1A) states that all heparin must be stopped (including heparin locks) and recommends a direct thrombin inhibitor (such as argatroban) or a Factor Xa inhibitor (such as danaparoid or fondaparinux) rather than other or no anticoagulation during RRT. If HIT is present without severe liver failure, KDIGO 5.3.4.1 (2C) suggests argatroban. For CRRT, KDIGO 5.3.2.2 (2B) suggests regional citrate rather than heparin when citrate is not contraindicated. If bleeding risk is increased, KDIGO 5.3.3.2 (2C) suggests avoiding regional heparinization; KDIGO 5.3.3.1 (2C) suggests citrate rather than no anticoagulation when citrate is not contraindicated.
+          </div>
+          <div class="chips" id="c-hep-bolus-on" role="radiogroup" aria-label="Heparin bolus" style="margin-top:14px">
+            <button type="button" class="chip is-on" role="radio" aria-checked="true" data-bolus="yes">Give bolus</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" data-bolus="no">No bolus</button>
+          </div>
+          <div class="grid-2" style="margin-top:14px">
+            <label class="field" id="c-hep-bolus-wrap">
+              <span class="field-label">Bolus</span>
+              <div class="field-control">
+                <input id="c-hep-bolus" inputmode="decimal" autocomplete="off" value="30" aria-label="Heparin bolus">
+                <span class="unit-pill">IU/kg</span>
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Pre-filter infusion</span>
+              <div class="field-control">
+                <input id="c-hep-rate" inputmode="decimal" autocomplete="off" value="7" aria-label="Heparin infusion rate">
+                <button type="button" class="unit-pill btn" id="c-hep-rate-u" data-unit="IU/kg/h" aria-label="Heparin infusion unit">IU/kg/h</button>
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Bag concentration</span>
+              <div class="field-control">
+                <input id="c-hep-conc" inputmode="decimal" autocomplete="off" placeholder="optional" aria-label="Heparin concentration">
+                <span class="unit-pill">units/mL</span>
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Target aPTT</span>
+              <div class="field-control">
+                <input id="c-hep-aptt" autocomplete="off" value="40–45 seconds" aria-label="Target aPTT">
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Anti-Xa (optional)</span>
+              <div class="field-control">
+                <input id="c-hep-antixa" autocomplete="off" placeholder="optional" aria-label="Heparin anti-Xa target">
+              </div>
+            </label>
+            <label class="field">
+              <span class="field-label">Monitoring interval</span>
+              <div class="field-control">
+                <input id="c-hep-mon" autocomplete="off" placeholder="unit protocol" aria-label="Heparin monitoring interval">
+              </div>
+            </label>
+          </div>
+          <div class="metric-grid" style="margin-top:12px">
+            <div class="metric"><div class="mv" id="c-hep-bolus-u">—</div><div class="ml">Bolus</div></div>
+            <div class="metric"><div class="mv" id="c-hep-rate-u-out">—</div><div class="ml">Infusion</div></div>
+            <div class="metric" id="c-hep-ml-m" hidden><div class="mv" id="c-hep-ml">—</div><div class="ml">Infusion (mL/h)</div></div>
+          </div>
+          <p class="note">Starting values are the unfractionated-heparin arm of Joannidis et al., <em>Intensive Care Med.</em> 2007;33:1571-1579 (PMID 17563874), the second of two small RCTs described in KDIGO AKI 2012, §5.3 rationale: bolus <strong>30 IU/kg</strong>, infusion <strong>7 IU/kg/h</strong> pre-filter, titrated to aPTT <strong>40–45 seconds</strong>. Joannidis &amp; Oudemans-van Straaten, <em>Crit Care</em> 2007;11:218 (doi:10.1186/cc5937) describe 30 IU/kg then <strong>5–10 IU/kg/h</strong> as “a possible scheme” in patients with normal coagulation, to be individualized. KDIGO does not recommend a single numeric heparin dose — “large variability,” and “no firm recommendations can be made.” The other KDIGO-cited RCT (Reeves et al., <em>Crit Care Med.</em> 1999;27:2224-2228) used bolus 2000–5000 U then 10 U/kg/h, titrated to aPTT 70–80 seconds. Joannidis 2007 notes increased bleeding when systemic aPTT is longer than 45 seconds (van de Wetering et al., <em>J Am Soc Nephrol.</em> 1996;7:145-150). Every field is editable for your unit’s protocol. Bag concentration has no cited default and is left blank; enter it to see mL/h. No monitoring interval is pre-filled: KDIGO says it is common practice to measure aPTT and adapt the target to bleeding risk, and to monitor the platelet count for HIT.</p>
+        </div>
+
+        <div id="c-citrate-block" class="hidden">
+        <p class="note" style="margin-top:14px;margin-bottom:12px">Citrate helpers: total-to-ionized calcium ratio for accumulation (Meier-Kriesche 2001). The infusion helper is a starting citrate-to-blood ratio only — protocols titrate to post-filter ionized calcium.</p>
         <div class="grid-2">
           <label class="field">
             <span class="field-label">Total calcium</span>
@@ -251,6 +310,7 @@
           <div class="metric"><div class="mv" id="c-cit-m">—</div><div class="ml">Citrate dose</div></div>
         </div>
         <p class="note">Default target 3 mmol per litre of blood (about 3–4 in published examples). ACD-A is 113 mmol/L and 4% trisodium citrate is 136 mmol/L, from Oudemans-van Straaten &amp; Ostermann, <em>Crit Care</em> 2012, Table 1. This is not a complete RCA protocol — calcium replacement is not calculated here.</p>
+        </div>
       </article>
 
       <article class="card rx-card" id="c-rx-card">

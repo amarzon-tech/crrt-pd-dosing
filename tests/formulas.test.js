@@ -427,6 +427,42 @@ section("PD daily fluid balance (mass balance)");
   approx(neg.balanceMl, -300, 1e-12, "negative 300 mL");
 }
 
+
+/* ── Unfractionated heparin arithmetic (Joannidis 2007 / KDIGO §5.3) ── */
+section("Unfractionated heparin bolus and infusion (arithmetic only)");
+eq(F.TARGETS.HEPARIN_BOLUS_IU_KG, 30, "default bolus 30 IU/kg (Joannidis 2007 ICM)");
+eq(F.TARGETS.HEPARIN_INFUSION_IU_KG_H, 7, "default infusion 7 IU/kg/h (Joannidis 2007 ICM)");
+eq(F.TARGETS.HEPARIN_INFUSION_RANGE_MIN, 5, "possible-scheme range min 5");
+eq(F.TARGETS.HEPARIN_INFUSION_RANGE_MAX, 10, "possible-scheme range max 10");
+eq(F.TARGETS.HEPARIN_APTT_LOW_SEC, 40, "Joannidis aPTT low 40");
+eq(F.TARGETS.HEPARIN_APTT_HIGH_SEC, 45, "Joannidis aPTT high 45");
+eq(F.TARGETS.HEPARIN_REEVES_INFUSION_IU_KG_H, 10, "Reeves infusion 10");
+eq(F.TARGETS.HEPARIN_REEVES_APTT_LOW_SEC, 70, "Reeves aPTT 70");
+eq(F.TARGETS.HEPARIN_REEVES_APTT_HIGH_SEC, 80, "Reeves aPTT 80");
+eq(F.TARGETS.HEPARIN_REEVES_BOLUS_MIN_U, 2000, "Reeves bolus min 2000 U");
+eq(F.TARGETS.HEPARIN_REEVES_BOLUS_MAX_U, 5000, "Reeves bolus max 5000 U");
+
+const hepB = F.heparinBolus({ weightKg: 80, bolusIuPerKg: 30, giveBolus: true });
+eq(hepB.bolusUnits, 2400, "80 kg × 30 IU/kg = 2400 units");
+eq(hepB.given, true, "bolus given flag");
+const hepNone = F.heparinBolus({ weightKg: 80, bolusIuPerKg: 30, giveBolus: false });
+eq(hepNone.bolusUnits, 0, "no-bolus option is 0 units");
+eq(hepNone.given, false, "no-bolus given flag");
+
+const hepI = F.heparinInfusion({ weightKg: 80, rateIuPerKgH: 7 });
+eq(hepI.rateUnitsH, 560, "80 kg × 7 IU/kg/h = 560 units/h");
+eq(hepI.rateMlH, null, "mL/h omitted when concentration not entered");
+
+const hepMl = F.heparinInfusion({ weightKg: 80, rateIuPerKgH: 7, concentrationUnitsPerMl: 100 });
+approx(hepMl.rateMlH, 5.6, 1e-9, "560 units/h ÷ 100 units/mL = 5.6 mL/h");
+
+const hepAbs = F.heparinInfusion({ weightKg: 80, rateUnitsH: 560 });
+approx(hepAbs.rateIuPerKgH, 7, 1e-9, "absolute 560 units/h is 7 IU/kg/h at 80 kg");
+
+throws(() => F.heparinBolus({ weightKg: 0, bolusIuPerKg: 30, giveBolus: true }), "bolus requires positive weight");
+throws(() => F.heparinInfusion({ weightKg: 80, rateIuPerKgH: -1 }), "negative infusion throws");
+throws(() => F.heparinInfusion({ weightKg: 80, rateIuPerKgH: 7, concentrationUnitsPerMl: 0 }), "concentration must be positive");
+
 /* ── Guard rails ─────────────────────────────────────────────────────────── */
 section("Input guards");
 throws(() => F.watsonTbw(50, 178, undefined, false), "Watson requires weight");

@@ -1,6 +1,6 @@
 # Content review — CRRT & PD Dosing (draft)
 
-**App:** CRRT & PD Dosing, v0.1.1-draft
+**App:** CRRT & PD Dosing, v0.1.2-draft
 **Publisher:** Wellness Tech LLC
 **For:** Dr Amar Damodar (Dr D)
 **Status:** `DRAFT=true`. The slim banner reads “Draft – not for clinical use until reviewed by Dr D.” Do not set `DRAFT` to false, or remove the banner, without Dr D’s sign-off in his own words.
@@ -345,6 +345,44 @@ A prescription-style order sheet was added to both tabs, built from values the a
 
 - [ ] Sign-off: Prescription order-sheet wording and blank write-in lines (no new math)
 
+
+---
+
+## Unfractionated heparin calculator (CRRT)
+
+Appears when **Heparin** is selected on the CRRT tab. Computes bolus in units and infusion in units/h (and mL/h if a bag concentration is entered) from weight. **Arithmetic only — no new pharmacologic model.** Every starting value is editable for a unit protocol. Results feed the prescription sheet (replacing the previous blank Dose / Target lines).
+
+**Starting values (editable), from the UFH arm of the second trial described in KDIGO AKI 2012, §5.3 rationale**
+
+- Bolus **30 IU/kg** (optional; a no-bolus toggle is provided so a unit protocol can omit it — not a cited preferred regimen)
+- Pre-filter infusion **7 IU/kg/h**
+- Target aPTT **40–45 seconds**
+
+Joannidis M, Kountchev J, Rauchenzauner M, et al. Enoxaparin vs. unfractionated heparin for anticoagulation during continuous veno-venous hemofiltration: a randomized controlled crossover study. *Intensive Care Med.* 2007;33:1571-1579. [PMID 17563874](https://pubmed.ncbi.nlm.nih.gov/17563874/). KDIGO reference 616.
+
+Joannidis M, Oudemans-van Straaten HM. Clinical review: Patency of the circuit in continuous renal replacement therapy. *Crit Care.* 2007;11:218. [doi:10.1186/cc5937](https://doi.org/10.1186/cc5937) describes “a possible scheme for UFH” of a 30 IU/kg bolus then an initial **5–10 IU/kg/h**, to be individualized, in patients with normal coagulation. That review notes increased bleeding if systemic aPTT is longer than 45 seconds, citing van de Wetering J, Westendorp RG, van der Hoeven JG, et al. *J Am Soc Nephrol.* 1996;7:145-150. [PMID 8808122](https://pubmed.ncbi.nlm.nih.gov/8808122/) (KDIGO reference 618).
+
+**KDIGO does not recommend a single numeric heparin dose.** Chapter 5.3 rationale: UFH is “mostly administered as a prefilter infusion, with large variability in the administered doses”; the dose–aPTT–filter–bleeding relationship “is not straightforward”; “it is common practice to measure aPTT for safety reasons and to adapt the target to the bleeding risk of the patient”; after the two small UFH-vs-LMWH RCTs, “no firm recommendations can be made.”
+
+**The other KDIGO-cited RCT (shown as an alternative, not the starting default):** Reeves JH, Cumming AR, Gallagher L, et al. *Crit Care Med.* 1999;27:2224-2228 (KDIGO reference 620). UFH arm: bolus **2000–5000 U**, then **10 U/kg/h**, titrated to aPTT **70–80 seconds** (mean 79 seconds).
+
+**Not defaulted, because no citable standard number was used as a starting value**
+
+- Bag concentration (mL/h appears only if you enter units/mL)
+- Monitoring interval (KDIGO says measure aPTT and also the platelet count for HIT, but does not give a frequency)
+- Anti-Xa for UFH (the anti-Xa figures in those two trials were for LMWH)
+
+**Bleeding / HIT caution (verbatim recommendation numbers, checked in the 2012 PDF)**
+
+- 5.3.2.2 (2B): suggest regional citrate rather than heparin when citrate is not contraindicated
+- 5.3.2.3 (2C): if citrate is contraindicated, UFH or LMWH rather than other anticoagulants
+- 5.3.3.1 (2C): if bleeding risk is increased and citrate is not contraindicated, suggest citrate rather than no anticoagulation
+- 5.3.3.2 (2C): suggest avoiding regional heparinization in a patient with increased bleeding risk
+- 5.3.4 (1A): in HIT, all heparin must be stopped (rationale includes heparin locks); recommend a DTI (e.g. argatroban) or Factor Xa inhibitor (e.g. danaparoid or fondaparinux) rather than other or no anticoagulation during RRT
+- 5.3.4.1 (2C): in HIT without severe liver failure, suggest argatroban
+
+- [ ] Sign-off: Unfractionated heparin starting values, source disagreements, HIT/bleeding wording, and prescription output
+
 ## Items not included, on purpose
 
 - No antibiotic or intraperitoneal drug dosing (ISPD peritonitis 2022 tables would need every number transcribed from the guideline table and cited as such).
@@ -387,5 +425,12 @@ A prescription-style order sheet was added to both tabs, built from values the a
 13. **“Downtime-adjusted prescribed dose”** on the CRRT sheet is the existing predilution-corrected, downtime-adjusted delivered estimate already shown in the results panel. It is not a new formula.
 
 14. **Target effluent mL/h** on the CRRT sheet is the entered target (mL/kg/h) × weight. Unit conversion only.
+
+
+15. **Unfractionated heparin starting dose.** KDIGO 5.3 gives no numeric dose. We start from the Joannidis 2007 ICM regimen that KDIGO itself describes (30 IU/kg, then 7 IU/kg/h, aPTT 40–45 s), which also sits inside the Joannidis & Oudemans-van Straaten 2007 “possible scheme” of 30 IU/kg then 5–10 IU/kg/h, and is consistent with that review’s bleeding note at aPTT > 45 s. The other KDIGO-cited RCT (Reeves 1999: 2000–5000 U, then 10 U/kg/h, aPTT 70–80 s) is shown as a published alternative and is not the default, because of that conflict. All starting values are editable.
+
+16. **No default bag concentration and no default monitoring interval.** We did not invent a 100 units/mL bag or a q4–6 h aPTT schedule. Anti-Xa is also left blank for UFH.
+
+17. **No-bolus option** is a UI convenience for unit protocols. It is not presented as a cited preferred regimen.
 
 Please also confirm you are comfortable with KDIGO / ISPD range labels being shown as interpretive chips (aids, not orders).

@@ -149,10 +149,48 @@ const acNone = Rx.formatCrrtPrescription({ date: DATE, anticoagulation: "none" }
 includes(acNone.text, "Anticoagulation: None", "none as entered");
 excludes(acNone.text, "Dose: ________________", "no heparin blanks when none");
 
-const acHep = Rx.formatCrrtPrescription({ date: DATE, anticoagulation: "heparin" });
-includes(acHep.text, "Anticoagulation: Heparin", "heparin as entered");
-includes(acHep.text, "  Dose: ________________", "heparin dose left blank (no input in the app)");
-includes(acHep.text, "  Target PTT / anti-Xa: ________________", "heparin target left blank");
+const acHepBlank = Rx.formatCrrtPrescription({ date: DATE, anticoagulation: "heparin" });
+includes(acHepBlank.text, "Anticoagulation: Unfractionated heparin (pre-filter)", "heparin as entered, pre-filter");
+includes(acHepBlank.text, "  Bolus: ________________", "bolus blank when not calculated");
+includes(acHepBlank.text, "  Infusion: ________________", "infusion blank when not calculated");
+includes(acHepBlank.text, "  Target aPTT: ________________", "aPTT blank when not entered");
+includes(acHepBlank.text, "  Monitoring: ________________", "monitoring blank when not entered");
+excludes(acHepBlank.text, "Anti-Xa:", "no anti-Xa line unless entered");
+excludes(acHepBlank.text, "mL/h", "no mL/h when concentration not entered");
+
+const acHepFull = Rx.formatCrrtPrescription({
+  date: DATE,
+  weightKg: 80,
+  anticoagulation: "heparin",
+  heparinBolusGiven: true,
+  heparinBolusUnits: 2400,
+  heparinBolusIuPerKg: 30,
+  heparinInfusionUnitsH: 560,
+  heparinInfusionIuPerKgH: 7,
+  heparinInfusionMlH: 5.6,
+  heparinApttTarget: "40–45 seconds",
+  heparinAntiXa: "",
+  heparinMonitoring: "aPTT and platelet count (unit protocol)",
+});
+includes(acHepFull.text, "Anticoagulation: Unfractionated heparin (pre-filter)", "full heparin header");
+includes(acHepFull.text, "  Bolus: 2,400 units  (30 IU/kg)", "computed bolus");
+includes(acHepFull.text, "  Infusion: 560 units/h  (7.0 IU/kg/h)  (5.6 mL/h)", "computed infusion with mL/h");
+includes(acHepFull.text, "  Target aPTT: 40–45 seconds", "entered aPTT target");
+includes(acHepFull.text, "  Monitoring: aPTT and platelet count (unit protocol)", "entered monitoring");
+excludes(acHepFull.text, "Anti-Xa:", "anti-Xa omitted when blank");
+excludes(acHepFull.text, "  Dose: ________________", "no leftover generic dose blank");
+
+const acHepNoBolus = Rx.formatCrrtPrescription({
+  date: DATE,
+  anticoagulation: "heparin",
+  heparinBolusGiven: false,
+  heparinInfusionUnitsH: 400,
+  heparinInfusionIuPerKgH: 5,
+  heparinApttTarget: "40–45 seconds",
+});
+includes(acHepNoBolus.text, "  Bolus: none", "no-bolus option");
+includes(acHepNoBolus.text, "  Infusion: 400 units/h  (5.0 IU/kg/h)", "infusion without mL/h");
+excludes(acHepNoBolus.text, "mL/h", "still no mL/h without concentration");
 
 /* ── missing calculated values stay blank ────────────────────────────────── */
 section("CRRT blanks when values are missing");

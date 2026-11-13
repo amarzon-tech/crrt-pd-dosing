@@ -103,9 +103,43 @@
         lines.push("  Target in blood: " + qty(opts.citrateTargetMmolPerL, "mmol/L", 0));
       }
     } else if (kind === "heparin") {
-      lines.push("Anticoagulation: Heparin");
-      lines.push("  Dose: " + BLANK);
-      lines.push("  Target PTT / anti-Xa: " + BLANK);
+      lines.push("Anticoagulation: Unfractionated heparin (pre-filter)");
+      if (opts.heparinBolusGiven === false) {
+        lines.push("  Bolus: none");
+      } else if (isNum(opts.heparinBolusUnits)) {
+        let b = "  Bolus: " + qty(opts.heparinBolusUnits, "units", 0);
+        if (isNum(opts.heparinBolusIuPerKg) && isNum(opts.weightKg)) {
+          b += "  (" + fmt(opts.heparinBolusIuPerKg, 0) + " IU/kg)";
+        }
+        lines.push(b);
+      } else {
+        lines.push("  Bolus: " + BLANK);
+      }
+      if (isNum(opts.heparinInfusionUnitsH)) {
+        let inf = "  Infusion: " + qty(opts.heparinInfusionUnitsH, "units/h", 0);
+        if (isNum(opts.heparinInfusionIuPerKgH)) {
+          inf += "  (" + fmt(opts.heparinInfusionIuPerKgH, 1) + " IU/kg/h)";
+        }
+        if (isNum(opts.heparinInfusionMlH)) {
+          inf += "  (" + fmt(opts.heparinInfusionMlH, 1) + " mL/h)";
+        }
+        lines.push(inf);
+      } else {
+        lines.push("  Infusion: " + BLANK);
+      }
+      if (opts.heparinApttTarget && String(opts.heparinApttTarget).trim()) {
+        lines.push("  Target aPTT: " + String(opts.heparinApttTarget).trim());
+      } else {
+        lines.push("  Target aPTT: " + BLANK);
+      }
+      if (opts.heparinAntiXa && String(opts.heparinAntiXa).trim()) {
+        lines.push("  Anti-Xa: " + String(opts.heparinAntiXa).trim());
+      }
+      if (opts.heparinMonitoring && String(opts.heparinMonitoring).trim()) {
+        lines.push("  Monitoring: " + String(opts.heparinMonitoring).trim());
+      } else {
+        lines.push("  Monitoring: " + BLANK);
+      }
     } else if (kind === "none") {
       lines.push("Anticoagulation: None");
     } else {

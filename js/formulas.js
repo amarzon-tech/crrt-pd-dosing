@@ -55,6 +55,28 @@
     // ISPD 2021 (Morelle et al.): UF insufficiency screening on a 4-h PET.
     PET_UF_MIN_425: 400, // mL, 4.25% dextrose / 3.86% glucose
     PET_UF_MIN_25: 100, // mL, 2.5% dextrose / 2.27% glucose
+    // Unfractionated heparin for CRRT. KDIGO AKI 2012 §5.3 does not recommend
+    // a single numeric dose ("large variability"; "no firm recommendations").
+    // Starting values below are the regimen used in the second of the two
+    // RCTs KDIGO describes (Joannidis et al., Intensive Care Med. 2007;
+    // 33:1571-1579, KDIGO ref. 616): bolus 30 U/kg then 7 U/kg/h, titrated
+    // to aPTT 40–45 s. Joannidis & Oudemans-van Straaten, Crit Care. 2007;
+    // 11:218, call 30 IU/kg then 5–10 IU/kg/h "a possible scheme" in patients
+    // with normal coagulation, to be individualized.
+    // The other KDIGO-cited RCT (Reeves et al., Crit Care Med. 1999;27:2224-2228,
+    // ref. 620) used bolus 2000–5000 U then 10 U/kg/h, titrated to aPTT 70–80 s.
+    // Those alternatives are shown in the UI; they are not the starting defaults.
+    HEPARIN_BOLUS_IU_KG: 30,
+    HEPARIN_INFUSION_IU_KG_H: 7,
+    HEPARIN_INFUSION_RANGE_MIN: 5,
+    HEPARIN_INFUSION_RANGE_MAX: 10,
+    HEPARIN_APTT_LOW_SEC: 40,
+    HEPARIN_APTT_HIGH_SEC: 45,
+    HEPARIN_REEVES_BOLUS_MIN_U: 2000,
+    HEPARIN_REEVES_BOLUS_MAX_U: 5000,
+    HEPARIN_REEVES_INFUSION_IU_KG_H: 10,
+    HEPARIN_REEVES_APTT_LOW_SEC: 70,
+    HEPARIN_REEVES_APTT_HIGH_SEC: 80,
   };
 
   function isNum(x) {
@@ -447,6 +469,68 @@
     return { mmolH, rateMlH, targetMmolPerL: target, solutionMmolPerL: sol, qbMlMin: qb };
   }
 
+
+  /**
+   * Unfractionated heparin bolus in units from weight and a units/kg dose.
+   * Arithmetic only. Starting 30 IU/kg is the Joannidis 2007 ICM / KDIGO
+   * §5.3-described regimen, not a KDIGO numeric recommendation.
+   * Pass giveBolus=false for a no-bolus prescription (bolusUnits = 0).
+   */
+  function heparinBolus(opts) {
+    const give = opts && opts.giveBolus !== false && opts.giveBolus !== 0;
+    if (!give) {
+      return { given: false, bolusIuPerKg: 0, bolusUnits: 0, weightKg: opts && opts.weightKg };
+    }
+    const w = req("weight", opts.weightKg);
+    const iuKg = req("bolus IU/kg", opts.bolusIuPerKg);
+    if (w <= 0) throw new Error("weight must be positive");
+    if (iuKg < 0) throw new Error("bolus IU/kg cannot be negative");
+    return {
+      given: true,
+      weightKg: w,
+      bolusIuPerKg: iuKg,
+      bolusUnits: w * iuKg,
+    };
+  }
+
+  /**
+   * Pre-filter unfractionated heparin infusion.
+   * Supply either rateIuPerKgH (with weight) or an absolute rateUnitsH.
+   * If concentrationUnitsPerMl is provided, also return rateMlH.
+   * Concentration has no cited default and may be omitted.
+   */
+  function heparinInfusion(opts) {
+    opts = opts || {};
+    let rateUnitsH = null;
+    let rateIuPerKgH = null;
+    const w = isNum(opts.weightKg) ? opts.weightKg : null;
+    if (isNum(opts.rateUnitsH)) {
+      if (opts.rateUnitsH < 0) throw new Error("infusion rate cannot be negative");
+      rateUnitsH = opts.rateUnitsH;
+      if (w && w > 0) rateIuPerKgH = rateUnitsH / w;
+    } else {
+      const iuKgH = req("infusion IU/kg/h", opts.rateIuPerKgH);
+      const wt = req("weight", opts.weightKg);
+      if (wt <= 0) throw new Error("weight must be positive");
+      if (iuKgH < 0) throw new Error("infusion IU/kg/h cannot be negative");
+      rateIuPerKgH = iuKgH;
+      rateUnitsH = wt * iuKgH;
+    }
+    let rateMlH = null;
+    const conc = opts.concentrationUnitsPerMl;
+    if (isNum(conc)) {
+      if (conc <= 0) throw new Error("heparin concentration must be positive");
+      rateMlH = rateUnitsH / conc;
+    }
+    return {
+      weightKg: w,
+      rateIuPerKgH,
+      rateUnitsH,
+      concentrationUnitsPerMl: isNum(conc) ? conc : null,
+      rateMlH,
+    };
+  }
+
   /* ═══════════════════════════════════════════════════════════════════════════
    * PD weekly Kt/V and CrCl
    * ═══════════════════════════════════════════════════════════════════════════ */
@@ -789,6 +873,8 @@
     netUfPlan,
     citrateCalciumRatio,
     citrateInfusionRate,
+    heparinBolus,
+    heparinInfusion,
     pdWeeklyKtv,
     pdDrainVolume,
     drainForWeeklyKtv,
